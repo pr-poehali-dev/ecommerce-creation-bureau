@@ -4,6 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 interface Product {
@@ -36,6 +40,15 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState('home');
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [orderData, setOrderData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    comment: ''
+  });
+  const { toast } = useToast();
 
   const filteredProducts = selectedCategory === 'Все' 
     ? products 
@@ -71,6 +84,37 @@ export default function Index() {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      toast({
+        title: 'Корзина пуста',
+        description: 'Добавьте товары для оформления заказа',
+        variant: 'destructive'
+      });
+      return;
+    }
+    setShowCheckout(true);
+  };
+
+  const handleSubmitOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderData.name || !orderData.phone || !orderData.address) {
+      toast({
+        title: 'Заполните обязательные поля',
+        description: 'Имя, телефон и адрес обязательны для заказа',
+        variant: 'destructive'
+      });
+      return;
+    }
+    toast({
+      title: '🎉 Заказ оформлен!',
+      description: `Заказ на сумму ${cartTotal.toLocaleString()} ₽ принят. Мы свяжемся с вами в ближайшее время.`,
+    });
+    setCart([]);
+    setShowCheckout(false);
+    setOrderData({ name: '', phone: '', email: '', address: '', comment: '' });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -150,16 +194,99 @@ export default function Index() {
                           </CardContent>
                         </Card>
                       ))}
-                      <div className="border-t pt-4 space-y-4">
-                        <div className="flex items-center justify-between text-lg font-bold">
-                          <span>Итого:</span>
-                          <span className="text-primary">{cartTotal.toLocaleString()} ₽</span>
+                      {!showCheckout ? (
+                        <div className="border-t pt-4 space-y-4">
+                          <div className="flex items-center justify-between text-lg font-bold">
+                            <span>Итого:</span>
+                            <span className="text-primary">{cartTotal.toLocaleString()} ₽</span>
+                          </div>
+                          <Button className="w-full" size="lg" onClick={handleCheckout}>
+                            Оформить заказ
+                            <Icon name="ArrowRight" size={20} className="ml-2" />
+                          </Button>
                         </div>
-                        <Button className="w-full" size="lg">
-                          Оформить заказ
-                          <Icon name="ArrowRight" size={20} className="ml-2" />
-                        </Button>
-                      </div>
+                      ) : (
+                        <div className="border-t pt-4 space-y-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-display text-xl font-bold">Оформление заказа</h3>
+                            <Button variant="ghost" size="sm" onClick={() => setShowCheckout(false)}>
+                              <Icon name="ArrowLeft" size={16} className="mr-1" />
+                              Назад
+                            </Button>
+                          </div>
+                          
+                          <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                            <div className="flex items-center justify-between text-sm font-semibold">
+                              <span>Сумма заказа:</span>
+                              <span className="text-primary text-lg">{cartTotal.toLocaleString()} ₽</span>
+                            </div>
+                          </div>
+
+                          <form onSubmit={handleSubmitOrder} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Имя <span className="text-destructive">*</span></Label>
+                              <Input
+                                id="name"
+                                placeholder="Иван Иванов"
+                                value={orderData.name}
+                                onChange={(e) => setOrderData({...orderData, name: e.target.value})}
+                                required
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="phone">Телефон <span className="text-destructive">*</span></Label>
+                              <Input
+                                id="phone"
+                                type="tel"
+                                placeholder="+7 (999) 123-45-67"
+                                value={orderData.phone}
+                                onChange={(e) => setOrderData({...orderData, phone: e.target.value})}
+                                required
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="ivan@example.com"
+                                value={orderData.email}
+                                onChange={(e) => setOrderData({...orderData, email: e.target.value})}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="address">Адрес доставки <span className="text-destructive">*</span></Label>
+                              <Textarea
+                                id="address"
+                                placeholder="Город, улица, дом, квартира"
+                                value={orderData.address}
+                                onChange={(e) => setOrderData({...orderData, address: e.target.value})}
+                                rows={3}
+                                required
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="comment">Комментарий к заказу</Label>
+                              <Textarea
+                                id="comment"
+                                placeholder="Пожелания к заказу или доставке"
+                                value={orderData.comment}
+                                onChange={(e) => setOrderData({...orderData, comment: e.target.value})}
+                                rows={2}
+                              />
+                            </div>
+
+                            <Button type="submit" className="w-full" size="lg">
+                              <Icon name="CheckCircle" size={20} className="mr-2" />
+                              Подтвердить заказ
+                            </Button>
+                          </form>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
