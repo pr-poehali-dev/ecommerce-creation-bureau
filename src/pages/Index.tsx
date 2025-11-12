@@ -88,6 +88,22 @@ export default function Index() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const calculateDelivery = () => {
+    if (orderData.delivery === 'pickup') return 0;
+    if (orderData.delivery === 'courier') {
+      if (cartTotal >= 5000) return 0;
+      return 300;
+    }
+    if (orderData.delivery === 'post') {
+      if (cartTotal >= 5000) return 0;
+      return 350;
+    }
+    return 0;
+  };
+
+  const deliveryCost = calculateDelivery();
+  const finalTotal = cartTotal + deliveryCost;
+
   const handleCheckout = () => {
     if (cart.length === 0) {
       toast({
@@ -115,7 +131,7 @@ export default function Index() {
     
     toast({
       title: '🎉 Заказ оформлен!',
-      description: `Заказ на сумму ${cartTotal.toLocaleString()} ₽ принят. Доставка: ${deliveryMethod}. Оплата: ${paymentMethod}.`,
+      description: `Заказ на сумму ${finalTotal.toLocaleString()} ₽ принят. Доставка: ${deliveryMethod}. Оплата: ${paymentMethod}.`,
     });
     setCart([]);
     setShowCheckout(false);
@@ -221,10 +237,33 @@ export default function Index() {
                             </Button>
                           </div>
                           
-                          <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                            <div className="flex items-center justify-between text-sm font-semibold">
-                              <span>Сумма заказа:</span>
-                              <span className="text-primary text-lg">{cartTotal.toLocaleString()} ₽</span>
+                          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-4 mb-4 space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Товары:</span>
+                              <span className="font-semibold">{cartTotal.toLocaleString()} ₽</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Доставка:</span>
+                              <span className="font-semibold">
+                                {deliveryCost === 0 ? (
+                                  <span className="text-green-600 flex items-center gap-1">
+                                    <Icon name="Check" size={14} />
+                                    Бесплатно
+                                  </span>
+                                ) : (
+                                  `${deliveryCost.toLocaleString()} ₽`
+                                )}
+                              </span>
+                            </div>
+                            {cartTotal < 5000 && orderData.delivery !== 'pickup' && (
+                              <div className="pt-2 border-t text-xs text-muted-foreground flex items-center gap-1">
+                                <Icon name="Info" size={12} />
+                                <span>Бесплатная доставка от 5000 ₽</span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between pt-2 border-t">
+                              <span className="font-bold">Итого:</span>
+                              <span className="text-primary text-xl font-bold">{finalTotal.toLocaleString()} ₽</span>
                             </div>
                           </div>
 
@@ -269,11 +308,20 @@ export default function Index() {
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                                   <RadioGroupItem value="courier" id="courier" />
                                   <Label htmlFor="courier" className="flex-1 cursor-pointer">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🚚</span>
-                                      <div>
-                                        <div className="font-semibold">Курьером</div>
-                                        <div className="text-xs text-muted-foreground">300 ₽ • 1-2 дня</div>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">🚚</span>
+                                        <div>
+                                          <div className="font-semibold">Курьером</div>
+                                          <div className="text-xs text-muted-foreground">1-2 дня</div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        {cartTotal >= 5000 ? (
+                                          <Badge variant="secondary" className="bg-green-100 text-green-700">Бесплатно</Badge>
+                                        ) : (
+                                          <span className="font-semibold">300 ₽</span>
+                                        )}
                                       </div>
                                     </div>
                                   </Label>
@@ -281,23 +329,35 @@ export default function Index() {
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                                   <RadioGroupItem value="pickup" id="pickup" />
                                   <Label htmlFor="pickup" className="flex-1 cursor-pointer">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🏪</span>
-                                      <div>
-                                        <div className="font-semibold">Самовывоз</div>
-                                        <div className="text-xs text-muted-foreground">Бесплатно • Сегодня</div>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">🏪</span>
+                                        <div>
+                                          <div className="font-semibold">Самовывоз</div>
+                                          <div className="text-xs text-muted-foreground">Сегодня</div>
+                                        </div>
                                       </div>
+                                      <Badge variant="secondary" className="bg-green-100 text-green-700">Бесплатно</Badge>
                                     </div>
                                   </Label>
                                 </div>
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                                   <RadioGroupItem value="post" id="post" />
                                   <Label htmlFor="post" className="flex-1 cursor-pointer">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">📦</span>
-                                      <div>
-                                        <div className="font-semibold">Почта России</div>
-                                        <div className="text-xs text-muted-foreground">от 350 ₽ • 3-7 дней</div>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">📦</span>
+                                        <div>
+                                          <div className="font-semibold">Почта России</div>
+                                          <div className="text-xs text-muted-foreground">3-7 дней</div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        {cartTotal >= 5000 ? (
+                                          <Badge variant="secondary" className="bg-green-100 text-green-700">Бесплатно</Badge>
+                                        ) : (
+                                          <span className="font-semibold">350 ₽</span>
+                                        )}
                                       </div>
                                     </div>
                                   </Label>
