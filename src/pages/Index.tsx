@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
@@ -46,7 +47,9 @@ export default function Index() {
     phone: '',
     email: '',
     address: '',
-    comment: ''
+    comment: '',
+    delivery: 'courier',
+    payment: 'card'
   });
   const { toast } = useToast();
 
@@ -107,13 +110,16 @@ export default function Index() {
       });
       return;
     }
+    const deliveryMethod = orderData.delivery === 'courier' ? 'Курьером' : orderData.delivery === 'pickup' ? 'Самовывоз' : 'Почта';
+    const paymentMethod = orderData.payment === 'card' ? 'Картой онлайн' : orderData.payment === 'cash' ? 'Наличными' : 'Картой при получении';
+    
     toast({
       title: '🎉 Заказ оформлен!',
-      description: `Заказ на сумму ${cartTotal.toLocaleString()} ₽ принят. Мы свяжемся с вами в ближайшее время.`,
+      description: `Заказ на сумму ${cartTotal.toLocaleString()} ₽ принят. Доставка: ${deliveryMethod}. Оплата: ${paymentMethod}.`,
     });
     setCart([]);
     setShowCheckout(false);
-    setOrderData({ name: '', phone: '', email: '', address: '', comment: '' });
+    setOrderData({ name: '', phone: '', email: '', address: '', comment: '', delivery: 'courier', payment: 'card' });
   };
 
   return (
@@ -258,6 +264,48 @@ export default function Index() {
                             </div>
 
                             <div className="space-y-2">
+                              <Label>Способ доставки <span className="text-destructive">*</span></Label>
+                              <RadioGroup value={orderData.delivery} onValueChange={(value) => setOrderData({...orderData, delivery: value})}>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="courier" id="courier" />
+                                  <Label htmlFor="courier" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">🚚</span>
+                                      <div>
+                                        <div className="font-semibold">Курьером</div>
+                                        <div className="text-xs text-muted-foreground">300 ₽ • 1-2 дня</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="pickup" id="pickup" />
+                                  <Label htmlFor="pickup" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">🏪</span>
+                                      <div>
+                                        <div className="font-semibold">Самовывоз</div>
+                                        <div className="text-xs text-muted-foreground">Бесплатно • Сегодня</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="post" id="post" />
+                                  <Label htmlFor="post" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">📦</span>
+                                      <div>
+                                        <div className="font-semibold">Почта России</div>
+                                        <div className="text-xs text-muted-foreground">от 350 ₽ • 3-7 дней</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+
+                            <div className="space-y-2">
                               <Label htmlFor="address">Адрес доставки <span className="text-destructive">*</span></Label>
                               <Textarea
                                 id="address"
@@ -267,6 +315,48 @@ export default function Index() {
                                 rows={3}
                                 required
                               />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Способ оплаты <span className="text-destructive">*</span></Label>
+                              <RadioGroup value={orderData.payment} onValueChange={(value) => setOrderData({...orderData, payment: value})}>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="card" id="card" />
+                                  <Label htmlFor="card" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">💳</span>
+                                      <div>
+                                        <div className="font-semibold">Картой онлайн</div>
+                                        <div className="text-xs text-muted-foreground">Visa, MasterCard, МИР</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="cash" id="cash" />
+                                  <Label htmlFor="cash" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">💵</span>
+                                      <div>
+                                        <div className="font-semibold">Наличными</div>
+                                        <div className="text-xs text-muted-foreground">При получении курьеру</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                  <RadioGroupItem value="card-on-delivery" id="card-on-delivery" />
+                                  <Label htmlFor="card-on-delivery" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">💳</span>
+                                      <div>
+                                        <div className="font-semibold">Картой при получении</div>
+                                        <div className="text-xs text-muted-foreground">Терминал у курьера</div>
+                                      </div>
+                                    </div>
+                                  </Label>
+                                </div>
+                              </RadioGroup>
                             </div>
 
                             <div className="space-y-2">
